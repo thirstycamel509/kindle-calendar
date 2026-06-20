@@ -32,8 +32,9 @@ h1{
 }
 
 .weather-icon{
-  font-size:56px;
-  line-height:1;
+  font-size:32px;
+  font-weight:bold;
+  min-width:90px;
 }
 
 .weather-text{
@@ -96,16 +97,16 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER ICONS =================
+// ================= WEATHER ICONS (TEXT ONLY FOR KINDLE) =================
 function getWeatherIcon(code){
-  if (code === 0) return "☀️";
-  if (code === 1 || code === 2 || code === 3) return "🌤";
-  if (code === 45 || code === 48) return "🌫";
-  if (code === 51 || code === 53 || code === 55) return "🌦";
-  if (code === 61 || code === 63 || code === 65) return "🌧";
-  if (code === 71 || code === 73 || code === 75) return "🌨";
-  if (code === 95 || code === 96 || code === 99) return "⛈";
-  return "🌡";
+  if (code === 0) return "SUN";
+  if (code === 1 || code === 2 || code === 3) return "CLOUD";
+  if (code === 45 || code === 48) return "FOG";
+  if (code === 51 || code === 53 || code === 55) return "DRIZZLE";
+  if (code === 61 || code === 63 || code === 65) return "RAIN";
+  if (code === 71 || code === 73 || code === 75) return "SNOW";
+  if (code === 95 || code === 96 || code === 99) return "STORM";
+  return "WEATHER";
 }
 
 // ================= DATE HELPERS =================
@@ -177,7 +178,6 @@ function loadWeather(){
         var data = JSON.parse(xhr.responseText);
         var w = data.current_weather || {};
 
-        // SAFE FALLBACK FOR KINDLE
         var code = (w.weathercode !== undefined && w.weathercode !== null) ? w.weathercode : 0;
         var icon = getWeatherIcon(code);
 
