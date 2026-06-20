@@ -67,17 +67,16 @@ h1{
   margin-bottom:6px;
 }
 
-.event-timed{
-  margin-left:18px;
+/* make time / all-day bold */
+.event-meta{
+  font-weight:bold;
 }
 
-.event-allDay{
-  font-weight:bold;
-  margin-left:10px;
-  padding:2px 0;
-  color:#000;
-  letter-spacing:0.5px;
+/* event text NOT bold */
+.event-title{
+  font-weight:normal;
 }
+
 </style>
 </head>
 
@@ -243,12 +242,14 @@ function loadCalendar(){
             var ev = groups[key][j];
 
             if (ev.time){
-              html += "<div class='event event-timed'>⏰ " +
-                formatTime(ev.time) + " " + ev.title +
+              html += "<div class='event'>" +
+                "<span class='event-meta'>⏰ " + formatTime(ev.time) + "</span> " +
+                "<span class='event-title'>" + ev.title + "</span>" +
               "</div>";
             } else {
-              html += "<div class='event event-allDay'>ALL DAY " +
-                ev.title +
+              html += "<div class='event'>" +
+                "<span class='event-meta'>ALL DAY</span> " +
+                "<span class='event-title'>" + ev.title + "</span>" +
               "</div>";
             }
           }
