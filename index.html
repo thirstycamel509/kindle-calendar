@@ -32,11 +32,13 @@ h1{
   font-weight:bold;
   border-bottom:1px solid #000;
   margin-top:18px;
+  margin-bottom:8px;
 }
 
 .event{
   font-size:24px;
   margin-left:10px;
+  margin-bottom:6px;
 }
 </style>
 </head>
@@ -53,44 +55,54 @@ Loading weather...
 <div id="events">Loading events...</div>
 
 <script>
-const ICAL_URL = "https://p130-caldav.icloud.com/published/2/ODk5NjQ1MDk4OTk2NDUwOR-JP6zFGVk1H6zHu1TkiHoFVeqJwFbHYV-D8HQD0QWfV4XZqUiA0LNYA5bv4rM9i9CicWpQpX7TgqZjoa7CjZc";
 
+// ================= CONFIG =================
+const ICAL_URL = "./calendar.ics";
 const LAT = 51.76;
 const LON = -0.45;
 
-// ---------------- WEATHER ----------------
+// ================= WEATHER =================
 async function loadWeather(){
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&timezone=Europe/London`;
-  const res = await fetch(url);
-  const data = await res.json();
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&timezone=Europe/London`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-  const w = data.current_weather;
+    const w = data.current_weather;
 
-  document.getElementById("weather").innerHTML =
-    "🌤 " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
+    document.getElementById("weather").innerHTML =
+      "🌤 " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
+  } catch (err) {
+    document.getElementById("weather").innerHTML =
+      "Weather unavailable";
+  }
 }
 
-// ---------------- ICS PARSER ----------------
+// ================= ICS PARSER =================
 function parseICS(text){
   const lines = text.split(/\r?\n/);
   const events = [];
   let ev = null;
 
   for (let line of lines){
-    if(line === "BEGIN:VEVENT") ev = {};
 
-    if(!ev) continue;
+    if (line === "BEGIN:VEVENT") {
+      ev = {};
+      continue;
+    }
 
-    if(line.startsWith("SUMMARY")){
+    if (!ev) continue;
+
+    if (line.startsWith("SUMMARY:")){
       ev.title = line.split(":")[1];
     }
 
-    if(line.startsWith("DTSTART")){
+    if (line.startsWith("DTSTART")){
       ev.date = line.split(":")[1].slice(0,8);
     }
 
-    if(line === "END:VEVENT"){
-      if(ev.title && ev.date) events.push(ev);
+    if (line === "END:VEVENT"){
+      if (ev.title && ev.date) events.push(ev);
       ev = null;
     }
   }
@@ -98,34 +110,44 @@ function parseICS(text){
   return events;
 }
 
-// ---------------- CALENDAR ----------------
-async function loadCalendar(const text = await res.text();){
+// ================= CALENDAR =================
+async function loadCalendar(){
   const container = document.getElementById("events");
 
   try {
-    container.innerHTML = "Testing calendar fetch...";
+    container.innerHTML = "Loading events...";
 
-    const res = await fetch("./calendar.ics");
+    const res = await fetch(ICAL_URL);
+
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+
     const text = await res.text();
 
-    container.innerHTML =
-      "Fetch OK<br><br>" +
-      "Length: " + text.length + "<br><br>" +
-      "First 300 chars:<br><pre>" +
-      text.slice(0, 300) +
-      "</pre>";
+    const events = parseICS(text);
+
+    if (!events.length){
+      container.innerHTML = "No events found";
+      return;
+    }
+
+    container.innerHTML = events
+      .map(e => `<div class="event">${e.title}</div>`)
+      .join("");
 
   } catch (err) {
-    container.innerHTML =
-      "FAILED:<br>" + err.message;
+    container.innerHTML = "FAILED: " + err.message;
   }
 }
 
-// ---------------- INIT ----------------
+// ================= INIT =================
 loadWeather();
 loadCalendar();
+
 setInterval(loadWeather, 10 * 60 * 1000);
 setInterval(loadCalendar, 10 * 60 * 1000);
+
 </script>
 
 </body>
