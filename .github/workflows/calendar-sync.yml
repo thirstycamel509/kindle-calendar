@@ -1,5 +1,8 @@
 name: Sync iCloud Calendar
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: "0 * * * *"
