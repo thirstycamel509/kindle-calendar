@@ -1,0 +1,26 @@
+name: Sync iCloud Calendar
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download calendar
+        run: |
+          curl -L "https://p130-caldav.icloud.com/published/2/ODk5NjQ5..." -o calendar.ics
+
+      - name: Commit file
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add calendar.ics
+          git commit -m "update calendar" || exit 0
+          git push
