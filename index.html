@@ -100,28 +100,51 @@ function parseICS(text){
 
 // ---------------- CALENDAR ----------------
 async function loadCalendar(){
-  const res = await fetch(ICAL_URL);
-  const text = await res.text();
-
-  console.log("ICS length:", text.length);
-  console.log(text.slice(0, 200));
-
-  const events = parseICS(text);
-
-  const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
-
-  const todayEvents = events.filter(e => e.date === today);
-
   const container = document.getElementById("events");
 
-  if(todayEvents.length === 0){
-    container.innerHTML = "<div class='event'>No events today</div>";
-    return;
-  }
+  try {
+    container.innerHTML = "Loading events...";
 
-  container.innerHTML = todayEvents
-    .map(e => `<div class='event'>${e.title}</div>`)
-    .join("");
+    const res = await fetch(ICAL_URL);
+
+    if (!res.ok) {
+      throw new Error("HTTP error " + res.status);
+    }
+
+    const text = await res.text();
+
+    // SHOW DEBUG ON SCREEN (important)
+    console.log("ICS loaded, length:", text.length);
+
+    if (!text || text.length < 50) {
+      throw new Error("Calendar feed is empty or blocked");
+    }
+
+    const events = parseICS(text);
+
+    const today = new Date()
+      .toISOString()
+      .slice(0,10)
+      .replace(/-/g,"");
+
+    const todayEvents = events.filter(e => e.date === today);
+
+    if (todayEvents.length === 0) {
+      container.innerHTML = "<div class='event'>No events today</div>";
+      return;
+    }
+
+    container.innerHTML = todayEvents
+      .map(e => `<div class='event'>${e.title}</div>`)
+      .join("");
+
+  } catch (err) {
+    // THIS WILL NOW SHOW ON SCREEN
+    container.innerHTML =
+      "<div class='event'>⚠️ Calendar error: " + err.message + "</div>";
+
+    console.log("Calendar error:", err);
+  }
 }
 
 // ---------------- INIT ----------------
