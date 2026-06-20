@@ -103,47 +103,21 @@ async function loadCalendar(){
   const container = document.getElementById("events");
 
   try {
-    container.innerHTML = "Loading events...";
+    container.innerHTML = "Testing calendar fetch...";
 
     const res = await fetch(ICAL_URL);
-
-    if (!res.ok) {
-      throw new Error("HTTP error " + res.status);
-    }
-
     const text = await res.text();
 
-    // SHOW DEBUG ON SCREEN (important)
-    console.log("ICS loaded, length:", text.length);
-
-    if (!text || text.length < 50) {
-      throw new Error("Calendar feed is empty or blocked");
-    }
-
-    const events = parseICS(text);
-
-    const today = new Date()
-      .toISOString()
-      .slice(0,10)
-      .replace(/-/g,"");
-
-    const todayEvents = events.filter(e => e.date === today);
-
-    if (todayEvents.length === 0) {
-      container.innerHTML = "<div class='event'>No events today</div>";
-      return;
-    }
-
-    container.innerHTML = todayEvents
-      .map(e => `<div class='event'>${e.title}</div>`)
-      .join("");
+    container.innerHTML =
+      "Fetch OK<br><br>" +
+      "Length: " + text.length + "<br><br>" +
+      "First 300 chars:<br><pre>" +
+      text.slice(0, 300) +
+      "</pre>";
 
   } catch (err) {
-    // THIS WILL NOW SHOW ON SCREEN
     container.innerHTML =
-      "<div class='event'>⚠️ Calendar error: " + err.message + "</div>";
-
-    console.log("Calendar error:", err);
+      "FAILED:<br>" + err.message;
   }
 }
 
