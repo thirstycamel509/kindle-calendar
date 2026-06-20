@@ -27,11 +27,14 @@ h1{
   font-size:26px;
 }
 
+.day{
+  margin-top:18px;
+}
+
 .day-title{
   font-size:30px;
   font-weight:bold;
   border-bottom:1px solid #000;
-  margin-top:18px;
   margin-bottom:8px;
 }
 
@@ -49,17 +52,15 @@ h1{
 
 <div class="weather" id="weather">Loading weather...</div>
 
-<div class="day-title">Today</div>
-<div id="events">Loading events...</div>
+<div id="calendar">Loading events...</div>
 
 <script>
 
-// ================= CONFIG =================
 const ICAL_URL = "./calendar.ics";
 const LAT = 51.76;
 const LON = -0.45;
 
-// ================= WEATHER =================
+// ---------------- WEATHER ----------------
 async function loadWeather(){
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&timezone=Europe/London`;
@@ -70,16 +71,15 @@ async function loadWeather(){
 
     document.getElementById("weather").innerHTML =
       "🌤 " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
-
-  } catch (err) {
-    document.getElementById("weather").innerHTML =
-      "Weather unavailable";
+  } catch (e) {
+    document.getElementById("weather").innerHTML = "Weather unavailable";
   }
 }
 
-// ================= ICS PARSER =================
+// ---------------- ICS PARSER ----------------
 function parseICS(text){
   const lines = text.split(/\r?\n/);
+
   const events = [];
   let ev = null;
 
@@ -92,14 +92,16 @@ function parseICS(text){
 
     if (!ev) continue;
 
-    if (line.startsWith("SUMMARY:")){
-      ev.title = line.replace("SUMMARY:", "").trim();
+    if (line.startsWith("SUMMARY")){
+      ev.title = line.split(":")[1]?.trim();
     }
 
     if (line.startsWith("DTSTART")){
       const value = line.split(":")[1]?.trim();
-      if (value) {
-        ev.date = value.slice(0,8); // works for DATE + DATETIME
+      if (value){
+        ev.rawDate = value;
+        ev.date = value.slice(0,8);
+        ev.time = value.includes("T") ? value.slice(9,13) : null;
       }
     }
 
@@ -114,37 +116,75 @@ function parseICS(text){
   return events;
 }
 
-// ================= CALENDAR =================
+// ---------------- DATE HELPERS ----------------
+function getDateOffset(offset){
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0,10).replace(/-/g,"");
+}
+
+function formatTime(t){
+  if (!t) return "";
+  return t.slice(0,2) + ":" + t.slice(2);
+}
+
+// ---------------- CALENDAR RENDER ----------------
 async function loadCalendar(){
-  const container = document.getElementById("events");
+  const container = document.getElementById("calendar");
 
   try {
-    container.innerHTML = "Loading events...";
-
     const res = await fetch(ICAL_URL);
-
-    if (!res.ok){
-      throw new Error("HTTP " + res.status);
-    }
-
     const text = await res.text();
+
     const events = parseICS(text);
 
-    if (!events.length){
-      container.innerHTML = "No events found";
-      return;
+    const today = getDateOffset(0);
+    const tomorrow = getDateOffset(1);
+    const day3 = getDateOffset(2);
+
+    const groups = {
+      "Today": [],
+      "Tomorrow": [],
+      "In 2 days": []
+    };
+
+    for (let e of events){
+      const label =
+        e.date === today ? "Today" :
+        e.date === tomorrow ? "Tomorrow" :
+        e.date === day3 ? "In 2 days" :
+        null;
+
+      if (label){
+        groups[label].push(e);
+      }
     }
 
-    container.innerHTML = events
-      .map(e => `<div class="event">${e.title}</div>`)
-      .join("");
+    let html = "";
+
+    for (let label of Object.keys(groups)){
+      html += `<div class="day"><div class="day-title">${label}</div>`;
+
+      if (groups[label].length === 0){
+        html += `<div class="event">No events</div>`;
+      } else {
+        for (let e of groups[label]){
+          const time = e.time ? formatTime(e.time) + " " : "";
+          html += `<div class="event">${time}${e.title}</div>`;
+        }
+      }
+
+      html += `</div>`;
+    }
+
+    container.innerHTML = html;
 
   } catch (err) {
     container.innerHTML = "FAILED: " + err.message;
   }
 }
 
-// ================= INIT =================
+// ---------------- INIT ----------------
 loadWeather();
 loadCalendar();
 
