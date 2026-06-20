@@ -99,13 +99,13 @@ function parseICS(text){
 }
 
 // ---------------- CALENDAR ----------------
-async function loadCalendar(){
+async function loadCalendar(const text = await res.text();){
   const container = document.getElementById("events");
 
   try {
     container.innerHTML = "Testing calendar fetch...";
 
-    const res = await fetch(ICAL_URL);
+    const res = await fetch("./calendar.ics");
     const text = await res.text();
 
     container.innerHTML =
