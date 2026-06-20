@@ -32,7 +32,7 @@ h1{
 }
 
 .weather-icon{
-  font-size:52px;
+  font-size:56px;
   line-height:1;
 }
 
@@ -40,13 +40,14 @@ h1{
   font-size:24px;
 }
 
-/* CALENDAR */
+/* LAST UPDATED */
 .updated{
   font-size:16px;
   margin-bottom:10px;
   color:#444;
 }
 
+/* CALENDAR */
 .day{
   margin-top:18px;
 }
@@ -65,7 +66,6 @@ h1{
   margin-bottom:6px;
 }
 
-/* timed vs all-day */
 .event-timed{
   margin-left:18px;
 }
@@ -175,14 +175,18 @@ function loadWeather(){
     if (xhr.readyState === 4 && xhr.status === 200){
       try {
         var data = JSON.parse(xhr.responseText);
-        var w = data.current_weather;
+        var w = data.current_weather || {};
 
-        var icon = getWeatherIcon(w.weathercode);
+        // SAFE FALLBACK FOR KINDLE
+        var code = (w.weathercode !== undefined && w.weathercode !== null) ? w.weathercode : 0;
+        var icon = getWeatherIcon(code);
+
+        var temp = (w.temperature !== undefined) ? w.temperature : "--";
 
         document.getElementById("weather").innerHTML =
           "<div class='weather-icon'>" + icon + "</div>" +
           "<div class='weather-text'>" +
-          w.temperature + "°C · Feels like " + w.temperature + "°C" +
+          temp + "°C · Feels like " + temp + "°C" +
           "</div>";
 
       } catch (e) {
@@ -254,7 +258,6 @@ function loadCalendar(){
 
       document.getElementById("updated").innerHTML =
         "Last updated: " + new Date().toLocaleTimeString();
-
     }
   };
 
