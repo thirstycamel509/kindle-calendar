@@ -103,6 +103,9 @@ async function loadCalendar(){
   const res = await fetch(ICAL_URL);
   const text = await res.text();
 
+  console.log("ICS length:", text.length);
+  console.log(text.slice(0, 200));
+
   const events = parseICS(text);
 
   const today = new Date().toISOString().slice(0,10).replace(/-/g,"");
