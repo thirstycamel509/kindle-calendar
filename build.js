@@ -168,7 +168,7 @@ async function run() {
     const events = parseICS(cal);
 
     console.log("Events found:", events.length);
-    console.log(events.slice(0, 5));
+    console.log(events.slice(0, 5)); 
     
     const html = buildHTML(events, weather);
 
