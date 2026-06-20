@@ -74,6 +74,9 @@ h1{
 .event-allDay{
   font-weight:bold;
   margin-left:10px;
+  padding:2px 0;
+  color:#000;
+  letter-spacing:0.5px;
 }
 </style>
 </head>
@@ -97,10 +100,10 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER ICONS (TEXT ONLY FOR KINDLE) =================
+// ================= WEATHER ICONS =================
 function getWeatherIcon(code){
   if (code === 0) return "SUN";
-  if (code === 1 || code === 2 || code === 3) return "CLOUD";
+  if (code === 1 || code === 2 || code === 3) return "CLOUDY";
   if (code === 45 || code === 48) return "FOG";
   if (code === 51 || code === 53 || code === 55) return "DRIZZLE";
   if (code === 61 || code === 63 || code === 65) return "RAIN";
@@ -244,7 +247,7 @@ function loadCalendar(){
                 formatTime(ev.time) + " " + ev.title +
               "</div>";
             } else {
-              html += "<div class='event event-allDay'>📌 " +
+              html += "<div class='event event-allDay'>ALL DAY " +
                 ev.title +
               "</div>";
             }
