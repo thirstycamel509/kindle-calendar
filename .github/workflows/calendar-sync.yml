@@ -18,7 +18,7 @@ jobs:
 
       - name: Download calendar
         run: |
-          curl -L "https://p130-caldav.icloud.com/published/2/ODk5NjQ5..." -o calendar.ics
+          curl -L "https://p130-caldav.icloud.com/published/2/ODk5NjQ1MDk4OTk2NDUwOR-JP6zFGVk1H6zHu1TkiHoFVeqJwFbHYV-D8HQD0QWfV4XZqUiA0LNYA5bv4rM9i9CicWpQpX7TgqZjoa7CjZc" -o calendar.ics
 
       - name: Commit file
         run: |
