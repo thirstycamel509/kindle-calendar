@@ -47,9 +47,7 @@ h1{
 
 <h1>Family Calendar</h1>
 
-<div class="weather" id="weather">
-Loading weather...
-</div>
+<div class="weather" id="weather">Loading weather...</div>
 
 <div class="day-title">Today</div>
 <div id="events">Loading events...</div>
@@ -72,6 +70,7 @@ async function loadWeather(){
 
     document.getElementById("weather").innerHTML =
       "🌤 " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
+
   } catch (err) {
     document.getElementById("weather").innerHTML =
       "Weather unavailable";
@@ -86,7 +85,7 @@ function parseICS(text){
 
   for (let line of lines){
 
-    if (line === "BEGIN:VEVENT") {
+    if (line.startsWith("BEGIN:VEVENT")){
       ev = {};
       continue;
     }
@@ -94,15 +93,20 @@ function parseICS(text){
     if (!ev) continue;
 
     if (line.startsWith("SUMMARY:")){
-      ev.title = line.split(":")[1];
+      ev.title = line.replace("SUMMARY:", "").trim();
     }
 
     if (line.startsWith("DTSTART")){
-      ev.date = line.split(":")[1].slice(0,8);
+      const value = line.split(":")[1]?.trim();
+      if (value) {
+        ev.date = value.slice(0,8); // works for DATE + DATETIME
+      }
     }
 
-    if (line === "END:VEVENT"){
-      if (ev.title && ev.date) events.push(ev);
+    if (line.startsWith("END:VEVENT")){
+      if (ev.title && ev.date){
+        events.push(ev);
+      }
       ev = null;
     }
   }
@@ -119,12 +123,11 @@ async function loadCalendar(){
 
     const res = await fetch(ICAL_URL);
 
-    if (!res.ok) {
+    if (!res.ok){
       throw new Error("HTTP " + res.status);
     }
 
     const text = await res.text();
-
     const events = parseICS(text);
 
     if (!events.length){
