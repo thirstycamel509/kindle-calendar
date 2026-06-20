@@ -57,6 +57,193 @@ h1{
 <script>
 
 // ================= CONFIG =================
+var ICAL_URL = "./calendar.ics";
+
+// Berkhamsted
+var LAT = 51.76;
+var LON = -0.56;
+
+// ================= WEATHER ICONS =================
+function getWeatherIcon(code){
+  if (code === 0) return "☀️";
+  if (code === 1 || code === 2 || code === 3) return "🌤";
+  if (code === 45 || code === 48) return "🌫";
+  if (code === 51 || code === 53 || code === 55) return "🌦";
+  if (code === 61 || code === 63 || code === 65) return "🌧";
+  if (code === 71 || code === 73 || code === 75) return "🌨";
+  if (code === 95 || code === 96 || code === 99) return "⛈";
+  return "🌡";
+}
+
+// ================= DATE HELPERS =================
+function getDate(offset){
+  var d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0,10).replace(/-/g,"");
+}
+
+// ================= ICS PARSER =================
+function parseICS(text){
+  var lines = text.split(/\r?\n/);
+
+  var events = [];
+  var ev = null;
+
+  for (var i = 0; i < lines.length; i++){
+    var line = lines[i];
+
+    if (line.indexOf("BEGIN:VEVENT") === 0){
+      ev = {};
+      continue;
+    }
+
+    if (!ev) continue;
+
+    if (line.indexOf("SUMMARY") === 0){
+      ev.title = line.split(":")[1];
+    }
+
+    if (line.indexOf("DTSTART") === 0){
+      var value = line.split(":")[1];
+      if (value){
+        ev.date = value.substring(0,8);
+        if (value.indexOf("T") > -1){
+          ev.time = value.substring(9,13);
+        }
+      }
+    }
+
+    if (line.indexOf("END:VEVENT") === 0){
+      if (ev.title && ev.date){
+        events.push(ev);
+      }
+      ev = null;
+    }
+  }
+
+  return events;
+}
+
+// ================= WEATHER =================
+function loadWeather(){
+  var xhr = new XMLHttpRequest();
+
+  xhr.open("GET",
+    "https://api.open-meteo.com/v1/forecast?latitude=" + LAT +
+    "&longitude=" + LON +
+    "&current_weather=true&timezone=Europe/London",
+    true
+  );
+
+  xhr.onreadystatechange = function(){
+    if (xhr.readyState === 4 && xhr.status === 200){
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var w = data.current_weather;
+
+        var icon = getWeatherIcon(w.weathercode);
+
+        document.getElementById("weather").innerHTML =
+          icon + " " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
+
+      } catch (e) {
+        document.getElementById("weather").innerHTML = "Weather unavailable";
+      }
+    }
+  };
+
+  xhr.send();
+}
+
+// ================= CALENDAR =================
+function loadCalendar(){
+  var container = document.getElementById("calendar");
+
+  var xhr = new XMLHttpRequest();
+
+  xhr.open("GET", ICAL_URL, true);
+
+  xhr.onreadystatechange = function(){
+    if (xhr.readyState === 4 && xhr.status === 200){
+
+      var events = parseICS(xhr.responseText);
+
+      var today = getDate(0);
+      var tomorrow = getDate(1);
+      var day3 = getDate(2);
+
+      var groups = {
+        "Today": [],
+        "Tomorrow": [],
+        "In 2 days": []
+      };
+
+      for (var i = 0; i < events.length; i++){
+        var e = events[i];
+
+        if (e.date === today) groups["Today"].push(e);
+        else if (e.date === tomorrow) groups["Tomorrow"].push(e);
+        else if (e.date === day3) groups["In 2 days"].push(e);
+      }
+
+      var html = "";
+
+      for (var key in groups){
+        html += "<div class='day'><div class='day-title'>" + key + "</div>";
+
+        if (groups[key].length === 0){
+          html += "<div class='event'>No events</div>";
+        } else {
+          for (var j = 0; j < groups[key].length; j++){
+            var ev = groups[key][j];
+            var time = ev.time ? (ev.time.substring(0,2) + ":" + ev.time.substring(2) + " ") : "";
+            html += "<div class='event'>" + time + ev.title + "</div>";
+          }
+        }
+
+        html += "</div>";
+      }
+
+      container.innerHTML = html;
+    }
+  };
+
+  xhr.send();
+}
+
+// ================= INIT =================
+loadWeather();
+loadCalendar();
+
+setInterval(loadWeather, 10 * 60 * 1000);
+setInterval(loadCalendar, 10 * 60 * 1000);
+
+</script>
+
+</body>
+</html>  border-bottom:1px solid #000;
+  margin-bottom:8px;
+}
+
+.event{
+  font-size:24px;
+  margin-left:10px;
+  margin-bottom:6px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Family Calendar</h1>
+
+<div class="weather" id="weather">Loading weather...</div>
+
+<div id="calendar">Loading events...</div>
+
+<script>
+
+// ================= CONFIG =================
 const ICAL_URL = "./calendar.ics";
 
 // Berkhamsted, UK
