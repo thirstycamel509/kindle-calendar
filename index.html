@@ -56,11 +56,26 @@ h1{
 
 <script>
 
+// ================= CONFIG =================
 const ICAL_URL = "./calendar.ics";
-const LAT = 51.76;
-const LON = -0.45;
 
-// ---------------- WEATHER ----------------
+// Berkhamsted, UK
+const LAT = 51.76;
+const LON = -0.56;
+
+// ================= WEATHER ICONS =================
+function getWeatherIcon(code){
+  if (code === 0) return "☀️";
+  if ([1,2,3].includes(code)) return "🌤";
+  if ([45,48].includes(code)) return "🌫";
+  if ([51,53,55].includes(code)) return "🌦";
+  if ([61,63,65].includes(code)) return "🌧";
+  if ([71,73,75].includes(code)) return "🌨";
+  if ([95,96,99].includes(code)) return "⛈";
+  return "🌡";
+}
+
+// ================= WEATHER =================
 async function loadWeather(){
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&timezone=Europe/London`;
@@ -68,15 +83,17 @@ async function loadWeather(){
     const data = await res.json();
 
     const w = data.current_weather;
+    const icon = getWeatherIcon(w.weathercode);
 
     document.getElementById("weather").innerHTML =
-      "🌤 " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
+      icon + " " + w.temperature + "°C · Wind " + w.windspeed + " km/h";
+
   } catch (e) {
     document.getElementById("weather").innerHTML = "Weather unavailable";
   }
 }
 
-// ---------------- ICS PARSER ----------------
+// ================= ICS PARSER =================
 function parseICS(text){
   const lines = text.split(/\r?\n/);
 
@@ -99,7 +116,7 @@ function parseICS(text){
     if (line.startsWith("DTSTART")){
       const value = line.split(":")[1]?.trim();
       if (value){
-        ev.rawDate = value;
+        ev.raw = value;
         ev.date = value.slice(0,8);
         ev.time = value.includes("T") ? value.slice(9,13) : null;
       }
@@ -116,8 +133,8 @@ function parseICS(text){
   return events;
 }
 
-// ---------------- DATE HELPERS ----------------
-function getDateOffset(offset){
+// ================= DATE HELPERS =================
+function getDate(offset){
   const d = new Date();
   d.setDate(d.getDate() + offset);
   return d.toISOString().slice(0,10).replace(/-/g,"");
@@ -128,7 +145,7 @@ function formatTime(t){
   return t.slice(0,2) + ":" + t.slice(2);
 }
 
-// ---------------- CALENDAR RENDER ----------------
+// ================= CALENDAR =================
 async function loadCalendar(){
   const container = document.getElementById("calendar");
 
@@ -138,9 +155,9 @@ async function loadCalendar(){
 
     const events = parseICS(text);
 
-    const today = getDateOffset(0);
-    const tomorrow = getDateOffset(1);
-    const day3 = getDateOffset(2);
+    const today = getDate(0);
+    const tomorrow = getDate(1);
+    const day3 = getDate(2);
 
     const groups = {
       "Today": [],
@@ -149,15 +166,9 @@ async function loadCalendar(){
     };
 
     for (let e of events){
-      const label =
-        e.date === today ? "Today" :
-        e.date === tomorrow ? "Tomorrow" :
-        e.date === day3 ? "In 2 days" :
-        null;
-
-      if (label){
-        groups[label].push(e);
-      }
+      if (e.date === today) groups["Today"].push(e);
+      else if (e.date === tomorrow) groups["Tomorrow"].push(e);
+      else if (e.date === day3) groups["In 2 days"].push(e);
     }
 
     let html = "";
@@ -184,7 +195,7 @@ async function loadCalendar(){
   }
 }
 
-// ---------------- INIT ----------------
+// ================= INIT =================
 loadWeather();
 loadCalendar();
 
