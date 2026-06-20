@@ -173,6 +173,7 @@ async function run() {
     const html = buildHTML(events, weather);
 
     fs.writeFileSync("index.html", html);
+    console.log(">>> BUILD SCRIPT IS RUNNING THIS FILE <<<");
 
     console.log("✔ Build complete: index.html generated");
   } catch (err) {
