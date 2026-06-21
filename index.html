@@ -15,29 +15,32 @@ body{
   line-height:1.4;
 }
 
-h1{
-  font-size:40px;
-  margin-bottom:10px;
-}
-
-/* WEATHER */
-.weather{
+/* TOP BAR (WEATHER ONLY) */
+.topbar{
   border:1px solid #000;
-  padding:14px;
+  padding:12px 14px;
   margin-bottom:16px;
   font-size:22px;
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  gap:14px;
+}
+
+.weather-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
 .weather-icon{
-  font-size:42px;
-  min-width:110px;
+  font-size:40px;
+  min-width:50px;
 }
 
-.weather-text{
+.weather-right{
   font-size:24px;
+  text-align:right;
+  white-space:nowrap;
 }
 
 /* LAST UPDATED */
@@ -79,9 +82,10 @@ h1{
 
 <body>
 
-<h1>Family Calendar</h1>
+<div class="topbar" id="weather">
+  Loading weather...
+</div>
 
-<div class="weather" id="weather">Loading weather...</div>
 <div class="updated" id="updated">Last updated: loading...</div>
 
 <div id="calendar">Loading events...</div>
@@ -119,7 +123,7 @@ function formatTime(t){
   return t.substring(0,2) + ":" + t.substring(2);
 }
 
-// ================= ICS PARSER (STABLE + NO RECURRENCE ENGINE) =================
+// ================= ICS PARSER (STABLE) =================
 function parseICS(text){
   var lines = text.split(/\r?\n/);
 
@@ -156,16 +160,21 @@ function parseICS(text){
     }
   }
 
-  // ================= FILTER + DEDUPE =================
-
+  // ================= 7-DAY WINDOW =================
   var today = getDate(0);
   var tomorrow = getDate(1);
   var day3 = getDate(2);
+  var day4 = getDate(3);
+  var day5 = getDate(4);
+  var day6 = getDate(5);
+  var day7 = getDate(6);
 
   function inWindow(d){
-    return d === today || d === tomorrow || d === day3;
+    return d === today || d === tomorrow || d === day3 ||
+           d === day4 || d === day5 || d === day6 || d === day7;
   }
 
+  // ================= DEDUPE =================
   var seen = {};
   var final = [];
 
@@ -202,9 +211,12 @@ function loadWeather(){
       var w = data.current_weather || {};
 
       document.getElementById("weather").innerHTML =
-        "<div class='weather-icon'>" + getWeatherIcon(w.weathercode || 0) + "</div>" +
-        "<div class='weather-text'>" +
-        (w.temperature || "--") + "°C · Feels like " + (w.temperature || "--") + "°C" +
+        "<div class='weather-left'>" +
+          "<div class='weather-icon'>" + getWeatherIcon(w.weathercode || 0) + "</div>" +
+          "<div>Weather</div>" +
+        "</div>" +
+        "<div class='weather-right'>" +
+          (w.temperature || "--") + "°C · Feels like " + (w.temperature || "--") + "°C" +
         "</div>";
     }
   };
