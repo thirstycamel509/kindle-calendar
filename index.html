@@ -119,7 +119,7 @@ function formatTime(t){
   return t.substring(0,2) + ":" + t.substring(2);
 }
 
-// ================= ICS PARSER (FIXED + SAFE) =================
+// ================= ICS PARSER (STABLE + NO RECURRENCE ENGINE) =================
 function parseICS(text){
   var lines = text.split(/\r?\n/);
 
@@ -130,7 +130,7 @@ function parseICS(text){
     var line = lines[i];
 
     if (line.indexOf("BEGIN:VEVENT") === 0){
-      ev = { rrule: null };
+      ev = {};
       continue;
     }
 
@@ -148,10 +148,6 @@ function parseICS(text){
       }
     }
 
-    if (line.indexOf("RRULE") === 0){
-      ev.rrule = line;
-    }
-
     if (line.indexOf("END:VEVENT") === 0){
       if (ev.title && ev.date){
         events.push(ev);
@@ -160,59 +156,33 @@ function parseICS(text){
     }
   }
 
-  // ===== EXPAND EVENTS SAFELY (NO DUPLICATES) =====
+  // ================= FILTER + DEDUPE =================
 
   var today = getDate(0);
   var tomorrow = getDate(1);
   var day3 = getDate(2);
 
-  function inWindow(date){
-    return date === today || date === tomorrow || date === day3;
+  function inWindow(d){
+    return d === today || d === tomorrow || d === day3;
   }
 
-  var finalEvents = [];
+  var seen = {};
+  var final = [];
 
   for (var i = 0; i < events.length; i++){
     var e = events[i];
 
-    // NORMAL EVENT
-    if (!e.rrule){
-      if (inWindow(e.date)){
-        finalEvents.push(e);
-      }
-      continue;
-    }
+    if (!inWindow(e.date)) continue;
 
-    // WEEKLY RECURRING EVENT (SAFE EXPANSION)
-    if (e.rrule.indexOf("FREQ=WEEKLY") > -1){
+    var key = e.title + "|" + e.date + "|" + (e.time || "");
 
-      var base = new Date(
-        e.date.substring(0,4),
-        e.date.substring(4,6) - 1,
-        e.date.substring(6,8)
-      );
+    if (seen[key]) continue;
 
-      for (var d = 0; d <= 14; d++){
-        var test = new Date(base);
-        test.setDate(test.getDate() + d);
-
-        var iso =
-          test.getFullYear().toString() +
-          ("0" + (test.getMonth()+1)).slice(-2) +
-          ("0" + test.getDate()).slice(-2);
-
-        if (inWindow(iso)){
-          finalEvents.push({
-            title: e.title,
-            date: iso,
-            time: e.time
-          });
-        }
-      }
-    }
+    seen[key] = true;
+    final.push(e);
   }
 
-  return finalEvents;
+  return final;
 }
 
 // ================= WEATHER =================
