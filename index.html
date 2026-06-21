@@ -32,9 +32,9 @@ h1{
 }
 
 .weather-icon{
-  font-size:32px;
+  font-size:42px;
   font-weight:bold;
-  min-width:90px;
+  min-width:110px;
 }
 
 .weather-text{
@@ -48,7 +48,7 @@ h1{
   color:#444;
 }
 
-/* CALENDAR */
+/* DAYS */
 .day{
   margin-top:18px;
 }
@@ -67,12 +67,10 @@ h1{
   margin-bottom:6px;
 }
 
-/* make time / all-day bold */
 .event-meta{
   font-weight:bold;
 }
 
-/* event text NOT bold */
 .event-title{
   font-weight:normal;
 }
@@ -85,7 +83,6 @@ h1{
 <h1>Family Calendar</h1>
 
 <div class="weather" id="weather">Loading weather...</div>
-
 <div class="updated" id="updated">Last updated: loading...</div>
 
 <div id="calendar">Loading events...</div>
@@ -101,14 +98,14 @@ var LON = -0.56;
 
 // ================= WEATHER ICONS =================
 function getWeatherIcon(code){
-  if (code === 0) return "SUN";
-  if (code === 1 || code === 2 || code === 3) return "CLOUDY";
-  if (code === 45 || code === 48) return "FOG";
-  if (code === 51 || code === 53 || code === 55) return "DRIZZLE";
-  if (code === 61 || code === 63 || code === 65) return "RAIN";
-  if (code === 71 || code === 73 || code === 75) return "SNOW";
-  if (code === 95 || code === 96 || code === 99) return "STORM";
-  return "WEATHER";
+  if (code === 0) return "☀️";
+  if (code === 1 || code === 2 || code === 3) return "☁️";
+  if (code === 45 || code === 48) return "🌫️";
+  if (code === 51 || code === 53 || code === 55) return "🌦️";
+  if (code === 61 || code === 63 || code === 65) return "🌧️";
+  if (code === 71 || code === 73 || code === 75) return "❄️";
+  if (code === 95 || code === 96 || code === 99) return "⛈️";
+  return "🌤️";
 }
 
 // ================= DATE HELPERS =================
@@ -123,7 +120,7 @@ function formatTime(t){
   return t.substring(0,2) + ":" + t.substring(2);
 }
 
-// ================= ICS PARSER =================
+// ================= ICS PARSER (WITH RECURRENCE SUPPORT) =================
 function parseICS(text){
   var lines = text.split(/\r?\n/);
 
@@ -134,7 +131,7 @@ function parseICS(text){
     var line = lines[i];
 
     if (line.indexOf("BEGIN:VEVENT") === 0){
-      ev = {};
+      ev = { rrule: null };
       continue;
     }
 
@@ -152,10 +149,48 @@ function parseICS(text){
       }
     }
 
+    if (line.indexOf("RRULE") === 0){
+      ev.rrule = line;
+    }
+
     if (line.indexOf("END:VEVENT") === 0){
+
       if (ev.title && ev.date){
-        events.push(ev);
+
+        // original event
+        events.push({
+          title: ev.title,
+          date: ev.date,
+          time: ev.time
+        });
+
+        // expand weekly recurring events
+        if (ev.rrule && ev.rrule.indexOf("FREQ=WEEKLY") > -1){
+
+          for (var d = 1; d <= 12; d++){
+
+            var base = new Date(
+              ev.date.substring(0,4),
+              ev.date.substring(4,6) - 1,
+              ev.date.substring(6,8)
+            );
+
+            base.setDate(base.getDate() + (7 * d));
+
+            var newDate =
+              base.getFullYear().toString() +
+              ("0" + (base.getMonth()+1)).slice(-2) +
+              ("0" + base.getDate()).slice(-2);
+
+            events.push({
+              title: ev.title,
+              date: newDate,
+              time: ev.time
+            });
+          }
+        }
       }
+
       ev = null;
     }
   }
@@ -180,10 +215,8 @@ function loadWeather(){
         var data = JSON.parse(xhr.responseText);
         var w = data.current_weather || {};
 
-        var code = (w.weathercode !== undefined && w.weathercode !== null) ? w.weathercode : 0;
-        var icon = getWeatherIcon(code);
-
-        var temp = (w.temperature !== undefined) ? w.temperature : "--";
+        var icon = getWeatherIcon(w.weathercode || 0);
+        var temp = w.temperature || "--";
 
         document.getElementById("weather").innerHTML =
           "<div class='weather-icon'>" + icon + "</div>" +
@@ -232,6 +265,7 @@ function loadCalendar(){
       var html = "";
 
       for (var key in groups){
+
         html += "<div class='day'><div class='day-title'>" + key + "</div>";
 
         if (groups[key].length === 0){
