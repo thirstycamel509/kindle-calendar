@@ -15,22 +15,24 @@ body{
   line-height:1.4;
 }
 
-/* WEATHER (RESTORED SIMPLE STYLE FOR KINDLE) */
+/* WEATHER */
 .weather{
   border:1px solid #000;
   padding:12px;
   margin-bottom:16px;
   font-size:26px;
+  font-weight:bold;
+  text-transform:uppercase;
 }
 
-/* UPDATED TEXT */
+/* UPDATED */
 .updated{
   font-size:16px;
   margin-bottom:10px;
   color:#444;
 }
 
-/* DAY HEADERS */
+/* DAYS */
 .day-title{
   font-size:30px;
   font-weight:bold;
@@ -38,9 +40,9 @@ body{
   margin-top:18px;
 }
 
-/* EVENTS */
+/* EVENTS (SMALLER TEXT NOW) */
 .event{
-  font-size:24px;
+  font-size:22px;
   margin-left:10px;
 }
 
@@ -71,16 +73,16 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER ICON =================
-function getWeatherIcon(code){
-  if (code === 0) return "☀️";
-  if (code <= 3) return "☁️";
-  if (code <= 48) return "🌫️";
-  if (code <= 55) return "🌦️";
-  if (code <= 65) return "🌧️";
-  if (code <= 75) return "❄️";
-  if (code <= 99) return "⛈️";
-  return "🌤️";
+// ================= WEATHER =================
+function getWeatherText(code){
+  if (code === 0) return "SUNNY";
+  if (code <= 3) return "CLOUDY";
+  if (code <= 48) return "FOGGY";
+  if (code <= 55) return "DRIZZLE";
+  if (code <= 65) return "RAIN";
+  if (code <= 75) return "SNOW";
+  if (code <= 99) return "STORM";
+  return "UNKNOWN";
 }
 
 // ================= DATE HELPERS =================
@@ -90,12 +92,20 @@ function getDate(offset){
   return d.toISOString().slice(0,10).replace(/-/g,"");
 }
 
+function getWeekday(offset){
+  var d = new Date();
+  d.setDate(d.getDate() + offset);
+
+  var days = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  return days[d.getDay()];
+}
+
 function formatTime(t){
   if (!t) return "";
   return t.substring(0,2) + ":" + t.substring(2);
 }
 
-// ================= ICS PARSER (STABLE) =================
+// ================= ICS PARSER =================
 function parseICS(text){
   var lines = text.split(/\r?\n/);
 
@@ -132,7 +142,6 @@ function parseICS(text){
     }
   }
 
-  // ================= 7-DAY WINDOW =================
   var days = [];
   for (var i = 0; i < 7; i++){
     days.push(getDate(i));
@@ -142,7 +151,6 @@ function parseICS(text){
     return days.indexOf(d) !== -1;
   }
 
-  // ================= DEDUPE =================
   var seen = {};
   var final = [];
 
@@ -179,9 +187,8 @@ function loadWeather(){
       var w = data.current_weather || {};
 
       document.getElementById("weather").innerHTML =
-        getWeatherIcon(w.weathercode || 0) + " " +
-        (w.temperature || "--") + "°C · Feels like " +
-        (w.temperature || "--") + "°C";
+        getWeatherText(w.weathercode || 0) +
+        " · " + (w.temperature || "--") + "°C";
     }
   };
 
@@ -199,41 +206,29 @@ function loadCalendar(){
 
       var events = parseICS(xhr.responseText);
 
-      var groups = {
-        "Today": [],
-        "Tomorrow": [],
-        "In 2 days": [],
-        "In 3 days": [],
-        "In 4 days": [],
-        "In 5 days": [],
-        "In 6 days": []
-      };
-
-      var labels = Object.keys(groups);
-
-      for (var i = 0; i < events.length; i++){
-        var e = events[i];
-
-        for (var d = 0; d < 7; d++){
-          if (e.date === getDate(d)){
-            groups[labels[d]].push(e);
-          }
-        }
-      }
-
       var html = "";
 
-      for (var k = 0; k < labels.length; k++){
-        var key = labels[k];
+      for (var i = 0; i < 7; i++){
 
-        html += "<div class='day-title'>" + key + "</div>";
+        var date = getDate(i);
+        var label = getWeekday(i);
 
-        if (groups[key].length === 0){
+        html += "<div class='day-title'>" + label + "</div>";
+
+        var dayEvents = [];
+
+        for (var j = 0; j < events.length; j++){
+          if (events[j].date === date){
+            dayEvents.push(events[j]);
+          }
+        }
+
+        if (dayEvents.length === 0){
           html += "<div class='event'>No events</div>";
         } else {
 
-          for (var j = 0; j < groups[key].length; j++){
-            var ev = groups[key][j];
+          for (var k = 0; k < dayEvents.length; k++){
+            var ev = dayEvents[k];
 
             if (ev.time){
               html += "<div class='event'>" +
