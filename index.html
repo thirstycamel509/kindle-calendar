@@ -15,32 +15,31 @@ body{
   line-height:1.4;
 }
 
-/* WEATHER */
+/* WEATHER (simple, Kindle-safe) */
 .weather{
   border:1px solid #000;
   padding:12px;
   margin-bottom:16px;
   font-size:26px;
-  font-weight:bold;
-  text-transform:uppercase;
 }
 
-/* UPDATED */
+/* LAST UPDATED */
 .updated{
   font-size:16px;
   margin-bottom:10px;
   color:#444;
 }
 
-/* DAYS */
+/* DAY HEADINGS (normal case now) */
 .day-title{
   font-size:30px;
   font-weight:bold;
   border-bottom:1px solid #000;
   margin-top:18px;
+  text-transform:none;
 }
 
-/* EVENTS (SMALLER TEXT NOW) */
+/* EVENTS (slightly smaller as requested) */
 .event{
   font-size:22px;
   margin-left:10px;
@@ -73,16 +72,16 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER =================
+// ================= WEATHER ICON TEXT =================
 function getWeatherText(code){
-  if (code === 0) return "SUNNY";
-  if (code <= 3) return "CLOUDY";
-  if (code <= 48) return "FOGGY";
-  if (code <= 55) return "DRIZZLE";
-  if (code <= 65) return "RAIN";
-  if (code <= 75) return "SNOW";
-  if (code <= 99) return "STORM";
-  return "UNKNOWN";
+  if (code === 0) return "Sunny";
+  if (code <= 3) return "Cloudy";
+  if (code <= 48) return "Foggy";
+  if (code <= 55) return "Drizzle";
+  if (code <= 65) return "Rain";
+  if (code <= 75) return "Snow";
+  if (code <= 99) return "Storm";
+  return "Unknown";
 }
 
 // ================= DATE HELPERS =================
@@ -96,7 +95,7 @@ function getWeekday(offset){
   var d = new Date();
   d.setDate(d.getDate() + offset);
 
-  var days = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   return days[d.getDay()];
 }
 
@@ -142,6 +141,7 @@ function parseICS(text){
     }
   }
 
+  // ================= 7 DAY WINDOW =================
   var days = [];
   for (var i = 0; i < 7; i++){
     days.push(getDate(i));
@@ -151,6 +151,7 @@ function parseICS(text){
     return days.indexOf(d) !== -1;
   }
 
+  // ================= DEDUPE =================
   var seen = {};
   var final = [];
 
