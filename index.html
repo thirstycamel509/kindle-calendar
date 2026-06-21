@@ -33,7 +33,6 @@ h1{
 
 .weather-icon{
   font-size:42px;
-  font-weight:bold;
   min-width:110px;
 }
 
@@ -99,12 +98,12 @@ var LON = -0.56;
 // ================= WEATHER ICONS =================
 function getWeatherIcon(code){
   if (code === 0) return "☀️";
-  if (code === 1 || code === 2 || code === 3) return "☁️";
-  if (code === 45 || code === 48) return "🌫️";
-  if (code === 51 || code === 53 || code === 55) return "🌦️";
-  if (code === 61 || code === 63 || code === 65) return "🌧️";
-  if (code === 71 || code === 73 || code === 75) return "❄️";
-  if (code === 95 || code === 96 || code === 99) return "⛈️";
+  if (code <= 3) return "☁️";
+  if (code <= 48) return "🌫️";
+  if (code <= 55) return "🌦️";
+  if (code <= 65) return "🌧️";
+  if (code <= 75) return "❄️";
+  if (code <= 99) return "⛈️";
   return "🌤️";
 }
 
@@ -120,7 +119,7 @@ function formatTime(t){
   return t.substring(0,2) + ":" + t.substring(2);
 }
 
-// ================= ICS PARSER (WITH RECURRENCE SUPPORT) =================
+// ================= ICS PARSER (FIXED + SAFE) =================
 function parseICS(text){
   var lines = text.split(/\r?\n/);
 
@@ -154,48 +153,66 @@ function parseICS(text){
     }
 
     if (line.indexOf("END:VEVENT") === 0){
-
       if (ev.title && ev.date){
-
-        // original event
-        events.push({
-          title: ev.title,
-          date: ev.date,
-          time: ev.time
-        });
-
-        // expand weekly recurring events
-        if (ev.rrule && ev.rrule.indexOf("FREQ=WEEKLY") > -1){
-
-          for (var d = 1; d <= 12; d++){
-
-            var base = new Date(
-              ev.date.substring(0,4),
-              ev.date.substring(4,6) - 1,
-              ev.date.substring(6,8)
-            );
-
-            base.setDate(base.getDate() + (7 * d));
-
-            var newDate =
-              base.getFullYear().toString() +
-              ("0" + (base.getMonth()+1)).slice(-2) +
-              ("0" + base.getDate()).slice(-2);
-
-            events.push({
-              title: ev.title,
-              date: newDate,
-              time: ev.time
-            });
-          }
-        }
+        events.push(ev);
       }
-
       ev = null;
     }
   }
 
-  return events;
+  // ===== EXPAND EVENTS SAFELY (NO DUPLICATES) =====
+
+  var today = getDate(0);
+  var tomorrow = getDate(1);
+  var day3 = getDate(2);
+
+  function inWindow(date){
+    return date === today || date === tomorrow || date === day3;
+  }
+
+  var finalEvents = [];
+
+  for (var i = 0; i < events.length; i++){
+    var e = events[i];
+
+    // NORMAL EVENT
+    if (!e.rrule){
+      if (inWindow(e.date)){
+        finalEvents.push(e);
+      }
+      continue;
+    }
+
+    // WEEKLY RECURRING EVENT (SAFE EXPANSION)
+    if (e.rrule.indexOf("FREQ=WEEKLY") > -1){
+
+      var base = new Date(
+        e.date.substring(0,4),
+        e.date.substring(4,6) - 1,
+        e.date.substring(6,8)
+      );
+
+      for (var d = 0; d <= 14; d++){
+        var test = new Date(base);
+        test.setDate(test.getDate() + d);
+
+        var iso =
+          test.getFullYear().toString() +
+          ("0" + (test.getMonth()+1)).slice(-2) +
+          ("0" + test.getDate()).slice(-2);
+
+        if (inWindow(iso)){
+          finalEvents.push({
+            title: e.title,
+            date: iso,
+            time: e.time
+          });
+        }
+      }
+    }
+  }
+
+  return finalEvents;
 }
 
 // ================= WEATHER =================
@@ -211,22 +228,14 @@ function loadWeather(){
 
   xhr.onreadystatechange = function(){
     if (xhr.readyState === 4 && xhr.status === 200){
-      try {
-        var data = JSON.parse(xhr.responseText);
-        var w = data.current_weather || {};
+      var data = JSON.parse(xhr.responseText);
+      var w = data.current_weather || {};
 
-        var icon = getWeatherIcon(w.weathercode || 0);
-        var temp = w.temperature || "--";
-
-        document.getElementById("weather").innerHTML =
-          "<div class='weather-icon'>" + icon + "</div>" +
-          "<div class='weather-text'>" +
-          temp + "°C · Feels like " + temp + "°C" +
-          "</div>";
-
-      } catch (e) {
-        document.getElementById("weather").innerHTML = "Weather unavailable";
-      }
+      document.getElementById("weather").innerHTML =
+        "<div class='weather-icon'>" + getWeatherIcon(w.weathercode || 0) + "</div>" +
+        "<div class='weather-text'>" +
+        (w.temperature || "--") + "°C · Feels like " + (w.temperature || "--") + "°C" +
+        "</div>";
     }
   };
 
