@@ -67,7 +67,7 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER TEXT =================
+// ================= WEATHER =================
 function getWeatherText(code){
   if (code === 0) return "SUNNY";
   if (code <= 3) return "CLOUDY";
@@ -86,23 +86,17 @@ function getDate(offset){
   return d.toISOString().slice(0,10).replace(/-/g,"");
 }
 
-function getWeekdayIndex(offset){
-  var d = new Date();
-  d.setDate(d.getDate() + offset);
-  return d.getDay(); // 0-6
-}
-
 function formatTime(t){
   if (!t) return "";
   return t.substring(0,2) + ":" + t.substring(2);
 }
 
-// ================= RRULE HELPERS (WEEKLY ONLY) =================
-function weekdayToIndex(code){
-  var map = {
-    "SU":0,"MO":1,"TU":2,"WE":3,"TH":4,"FR":5,"SA":6
-  };
-  return map[code];
+// weekday index
+function weekdayIndex(dateStr){
+  var y = parseInt(dateStr.substring(0,4));
+  var m = parseInt(dateStr.substring(4,6)) - 1;
+  var d = parseInt(dateStr.substring(6,8));
+  return new Date(y,m,d).getDay();
 }
 
 // ================= ICS PARSER =================
@@ -127,10 +121,10 @@ function parseICS(text){
     }
 
     if (line.indexOf("DTSTART") === 0){
-      var value = line.split(":")[1];
-      if (value){
-        ev.date = value.substring(0,8);
-        ev.time = value.indexOf("T") > -1 ? value.substring(9,13) : null;
+      var v = line.split(":")[1];
+      if (v){
+        ev.startDate = v.substring(0,8);
+        ev.time = v.indexOf("T") > -1 ? v.substring(9,13) : null;
       }
     }
 
@@ -139,52 +133,94 @@ function parseICS(text){
     }
 
     if (line.indexOf("END:VEVENT") === 0){
-      if (ev.title){
+      if (ev.title && ev.startDate){
         events.push(ev);
       }
       ev = null;
     }
   }
 
-  // expand weekly recurring events (next 7 days only)
-  var expanded = [];
+  return expandEvents(events);
+}
+
+// ================= RRULE EXPANSION =================
+function expandEvents(events){
+
+  var output = [];
+  var seen = {};
 
   for (var i = 0; i < events.length; i++){
     var e = events[i];
 
-    // normal event
+    // NON recurring
     if (!e.rrule){
-      if (e.date) expanded.push(e);
+      addIfInRange(e);
       continue;
     }
 
-    // only handle weekly
+    // WEEKLY only (your main case)
     if (e.rrule.indexOf("FREQ=WEEKLY") !== -1){
 
-      var bydayMatch = e.rrule.match(/BYDAY=([A-Z,]+)/);
-      if (!bydayMatch) continue;
+      var match = e.rrule.match(/BYDAY=([A-Z,]+)/);
+      if (!match) continue;
 
-      var days = bydayMatch[1].split(",");
+      var days = match[1].split(",");
 
       for (var d = 0; d < 7; d++){
-        var todayIndex = getWeekdayIndex(d);
+
+        var dateStr = getDate(d);
+        var wd = weekdayIndex(dateStr);
 
         for (var x = 0; x < days.length; x++){
-          if (weekdayToIndex(days[x]) === todayIndex){
 
-            expanded.push({
-              title: e.title,
-              date: getDate(d),
-              time: e.time
-            });
+          var map = {SU:0,MO:1,TU:2,WE:3,TH:4,FR:5,SA:6};
 
+          if (map[days[x]] === wd){
+
+            var key = e.title + "|" + dateStr + "|" + (e.time || "");
+
+            if (!seen[key]){
+              seen[key] = true;
+
+              output.push({
+                title: e.title,
+                date: dateStr,
+                time: e.time
+              });
+            }
           }
+        }
+      }
+    }
+
+    // MONTHLY basic support (DOTTY rule)
+    if (e.rrule.indexOf("FREQ=MONTHLY") !== -1){
+      addIfInRange(e);
+    }
+  }
+
+  function addIfInRange(e){
+    for (var i = 0; i < 7; i++){
+      var dateStr = getDate(i);
+
+      if (e.startDate === dateStr){
+
+        var key = e.title + "|" + dateStr + "|" + (e.time || "");
+
+        if (!seen[key]){
+          seen[key] = true;
+
+          output.push({
+            title: e.title,
+            date: dateStr,
+            time: e.time
+          });
         }
       }
     }
   }
 
-  return expanded;
+  return output;
 }
 
 // ================= WEATHER =================
@@ -226,12 +262,14 @@ function loadCalendar(){
 
       var html = "";
 
+      var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
       for (var i = 0; i < 7; i++){
 
         var date = getDate(i);
-        var label = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][getWeekdayIndex(i)];
+        var wd = days[new Date().getDay()];
 
-        html += "<div class='day-title'>" + label + "</div>";
+        html += "<div class='day-title'>" + days[new Date(new Date().setDate(new Date().getDate()+i)).getDay()] + "</div>";
 
         var dayEvents = [];
 
@@ -249,15 +287,12 @@ function loadCalendar(){
             var ev = dayEvents[k];
 
             if (ev.time){
-              html += "<div class='event'>" +
-                "<span class='event-meta'>⏰ " + formatTime(ev.time) + "</span> " +
-                "<span class='event-title'>" + ev.title + "</span>" +
-              "</div>";
+              html += "<div class='event'><span class='event-meta'>⏰ " +
+                formatTime(ev.time) +
+                "</span> <span class='event-title'>" + ev.title + "</span></div>";
             } else {
-              html += "<div class='event'>" +
-                "<span class='event-meta'>ALL DAY</span> " +
-                "<span class='event-title'>" + ev.title + "</span>" +
-              "</div>";
+              html += "<div class='event'><span class='event-meta'>ALL DAY</span> " +
+                "<span class='event-title'>" + ev.title + "</span></div>";
             }
           }
         }
