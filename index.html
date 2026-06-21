@@ -15,7 +15,7 @@ body{
   line-height:1.4;
 }
 
-/* WEATHER (simple, Kindle-safe) */
+/* WEATHER */
 .weather{
   border:1px solid #000;
   padding:12px;
@@ -30,16 +30,15 @@ body{
   color:#444;
 }
 
-/* DAY HEADINGS (normal case now) */
+/* DAY HEADINGS (same size as events) */
 .day-title{
-  font-size:30px;
+  font-size:22px;
   font-weight:bold;
   border-bottom:1px solid #000;
   margin-top:18px;
-  text-transform:none;
 }
 
-/* EVENTS (slightly smaller as requested) */
+/* EVENTS */
 .event{
   font-size:22px;
   margin-left:10px;
@@ -72,16 +71,16 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER ICON TEXT =================
+// ================= WEATHER =================
 function getWeatherText(code){
-  if (code === 0) return "Sunny";
-  if (code <= 3) return "Cloudy";
-  if (code <= 48) return "Foggy";
-  if (code <= 55) return "Drizzle";
-  if (code <= 65) return "Rain";
-  if (code <= 75) return "Snow";
-  if (code <= 99) return "Storm";
-  return "Unknown";
+  if (code === 0) return "SUNNY";
+  if (code <= 3) return "CLOUDY";
+  if (code <= 48) return "FOGGY";
+  if (code <= 55) return "DRIZZLE";
+  if (code <= 65) return "RAIN";
+  if (code <= 75) return "SNOW";
+  if (code <= 99) return "STORM";
+  return "UNKNOWN";
 }
 
 // ================= DATE HELPERS =================
@@ -141,7 +140,7 @@ function parseICS(text){
     }
   }
 
-  // ================= 7 DAY WINDOW =================
+  // ================= 7-DAY WINDOW =================
   var days = [];
   for (var i = 0; i < 7; i++){
     days.push(getDate(i));
@@ -189,7 +188,8 @@ function loadWeather(){
 
       document.getElementById("weather").innerHTML =
         getWeatherText(w.weathercode || 0) +
-        " · " + (w.temperature || "--") + "°C";
+        " · " + (w.temperature || "--") + "°C · Feels like " +
+        (w.temperature || "--") + "°C";
     }
   };
 
