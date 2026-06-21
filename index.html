@@ -15,58 +15,33 @@ body{
   line-height:1.4;
 }
 
-/* TOP BAR (WEATHER ONLY) */
-.topbar{
+/* WEATHER (RESTORED SIMPLE STYLE FOR KINDLE) */
+.weather{
   border:1px solid #000;
-  padding:12px 14px;
+  padding:12px;
   margin-bottom:16px;
-  font-size:22px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  font-size:26px;
 }
 
-.weather-left{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.weather-icon{
-  font-size:40px;
-  min-width:50px;
-}
-
-.weather-right{
-  font-size:24px;
-  text-align:right;
-  white-space:nowrap;
-}
-
-/* LAST UPDATED */
+/* UPDATED TEXT */
 .updated{
   font-size:16px;
   margin-bottom:10px;
   color:#444;
 }
 
-/* DAYS */
-.day{
-  margin-top:18px;
-}
-
+/* DAY HEADERS */
 .day-title{
   font-size:30px;
   font-weight:bold;
   border-bottom:1px solid #000;
-  margin-bottom:8px;
+  margin-top:18px;
 }
 
 /* EVENTS */
 .event{
   font-size:24px;
   margin-left:10px;
-  margin-bottom:6px;
 }
 
 .event-meta{
@@ -82,10 +57,7 @@ body{
 
 <body>
 
-<div class="topbar" id="weather">
-  Loading weather...
-</div>
-
+<div class="weather" id="weather">Loading weather...</div>
 <div class="updated" id="updated">Last updated: loading...</div>
 
 <div id="calendar">Loading events...</div>
@@ -99,7 +71,7 @@ var ICAL_URL = "./calendar.ics";
 var LAT = 51.76;
 var LON = -0.56;
 
-// ================= WEATHER ICONS =================
+// ================= WEATHER ICON =================
 function getWeatherIcon(code){
   if (code === 0) return "☀️";
   if (code <= 3) return "☁️";
@@ -161,17 +133,13 @@ function parseICS(text){
   }
 
   // ================= 7-DAY WINDOW =================
-  var today = getDate(0);
-  var tomorrow = getDate(1);
-  var day3 = getDate(2);
-  var day4 = getDate(3);
-  var day5 = getDate(4);
-  var day6 = getDate(5);
-  var day7 = getDate(6);
+  var days = [];
+  for (var i = 0; i < 7; i++){
+    days.push(getDate(i));
+  }
 
   function inWindow(d){
-    return d === today || d === tomorrow || d === day3 ||
-           d === day4 || d === day5 || d === day6 || d === day7;
+    return days.indexOf(d) !== -1;
   }
 
   // ================= DEDUPE =================
@@ -211,13 +179,9 @@ function loadWeather(){
       var w = data.current_weather || {};
 
       document.getElementById("weather").innerHTML =
-        "<div class='weather-left'>" +
-          "<div class='weather-icon'>" + getWeatherIcon(w.weathercode || 0) + "</div>" +
-          "<div>Weather</div>" +
-        "</div>" +
-        "<div class='weather-right'>" +
-          (w.temperature || "--") + "°C · Feels like " + (w.temperature || "--") + "°C" +
-        "</div>";
+        getWeatherIcon(w.weathercode || 0) + " " +
+        (w.temperature || "--") + "°C · Feels like " +
+        (w.temperature || "--") + "°C";
     }
   };
 
@@ -235,29 +199,34 @@ function loadCalendar(){
 
       var events = parseICS(xhr.responseText);
 
-      var today = getDate(0);
-      var tomorrow = getDate(1);
-      var day3 = getDate(2);
-
       var groups = {
         "Today": [],
         "Tomorrow": [],
-        "In 2 days": []
+        "In 2 days": [],
+        "In 3 days": [],
+        "In 4 days": [],
+        "In 5 days": [],
+        "In 6 days": []
       };
+
+      var labels = Object.keys(groups);
 
       for (var i = 0; i < events.length; i++){
         var e = events[i];
 
-        if (e.date === today) groups["Today"].push(e);
-        else if (e.date === tomorrow) groups["Tomorrow"].push(e);
-        else if (e.date === day3) groups["In 2 days"].push(e);
+        for (var d = 0; d < 7; d++){
+          if (e.date === getDate(d)){
+            groups[labels[d]].push(e);
+          }
+        }
       }
 
       var html = "";
 
-      for (var key in groups){
+      for (var k = 0; k < labels.length; k++){
+        var key = labels[k];
 
-        html += "<div class='day'><div class='day-title'>" + key + "</div>";
+        html += "<div class='day-title'>" + key + "</div>";
 
         if (groups[key].length === 0){
           html += "<div class='event'>No events</div>";
@@ -279,8 +248,6 @@ function loadCalendar(){
             }
           }
         }
-
-        html += "</div>";
       }
 
       document.getElementById("calendar").innerHTML = html;
