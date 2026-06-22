@@ -224,7 +224,7 @@ if (e.rrule.indexOf("FREQ=WEEKLY") !== -1){
   }
 
   function addIfInRange(e){
-    for (var i = 0; i < 7; i++){
+    for (var i = 0; i < 3; i++){
       var dateStr = getDate(i);
 
       if (e.startDate === dateStr){
@@ -288,7 +288,7 @@ function loadCalendar(){
 
       var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-      for (var i = 0; i < 7; i++){
+      for (var i = 0; i < 3; i++){
 
         var date = getDate(i);
         var wd = days[new Date().getDay()];
