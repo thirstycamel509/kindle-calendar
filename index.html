@@ -32,6 +32,7 @@ body{
   font-size:28px;
   font-weight:bold;
   border-bottom:1px solid #000;
+  margin-left:14px;
   margin-top:16px;
   margin-bottom:4px;
 }
@@ -306,10 +307,12 @@ for (var i = 0; i < 3; i++){
   }
 
   var heading =
-    prefix +
-    days[d.getDay()] + " " +
-    d.getDate() + " " +
-    months[d.getMonth()];
+    "<span style='font-weight:bold'>" + prefix + "</span>" +
+    "<span style='font-weight:normal'>"
+    + days[d.getDay()] + " "
+    + d.getDate() + " "
+    + months[d.getMonth()] +
+    "</span>";
 
   var date = getDate(i);
 
