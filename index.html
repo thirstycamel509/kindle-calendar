@@ -263,10 +263,10 @@ function loadWeather(){
       var data = JSON.parse(xhr.responseText);
       var w = data.current_weather || {};
 
-      document.getElementById("weather").innerHTML =
-        getWeatherText(w.weathercode || 0) +
-        " · " + (w.temperature || "--") + "°C · Feels like " +
-        (w.temperature || "--") + "°C";
+      ddocument.getElementById("weather").innerHTML =
+      "<strong>" + getWeatherText(w.weathercode || 0) + "</strong>" +
+      " · " + (w.temperature || "--") + "°C · Feels like " +
+      (w.temperature || "--") + "°C";
     }
   };
 
