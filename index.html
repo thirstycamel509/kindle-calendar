@@ -287,13 +287,21 @@ function loadCalendar(){
       var html = "";
 
       var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-      for (var i = 0; i < 3; i++){
+for (var i = 0; i < 3; i++){
 
-        var date = getDate(i);
-        var wd = days[new Date().getDay()];
+  var d = new Date();
+  d.setDate(d.getDate() + i);
 
-        html += "<div class='day-title'>" + days[new Date(new Date().setDate(new Date().getDate()+i)).getDay()] + "</div>";
+  var heading =
+    days[d.getDay()] + " " +
+    d.getDate() + " " +
+    months[d.getMonth()];
+
+  var date = getDate(i);
+
+  html += "<div class='day-title'>" + heading + "</div>";
 
         var dayEvents = [];
 
