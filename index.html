@@ -93,9 +93,9 @@ function formatTime(t){
 
 // weekday index
 function weekdayIndex(dateStr){
-  var y = parseInt(dateStr.substring(0,4));
-  var m = parseInt(dateStr.substring(4,6)) - 1;
-  var d = parseInt(dateStr.substring(6,8));
+  var y = parseInt(dateStr.substring(0,4),10);
+  var m = parseInt(dateStr.substring(4,6),10) - 1;
+  var d = parseInt(dateStr.substring(6,8),10);
   return new Date(y,m,d).getDay();
 }
 
@@ -159,12 +159,36 @@ function expandEvents(events){
     }
 
     // WEEKLY only (your main case)
-    if (e.rrule.indexOf("FREQ=WEEKLY") !== -1){
+    // WEEKLY recurring
+if (e.rrule.indexOf("FREQ=WEEKLY") !== -1){
 
-      var match = e.rrule.match(/BYDAY=([A-Z,]+)/);
-      if (!match) continue;
+  var untilMatch = e.rrule.match(/UNTIL=(\d{8})/);
 
-      var days = match[1].split(",");
+  if (untilMatch){
+    var untilDate = untilMatch[1];
+
+    if (untilDate < getDate(0)){
+      continue;
+    }
+  }
+
+  var days = [];
+
+  var match = e.rrule.match(/BYDAY=([A-Z,]+)/);
+
+  if (match){
+    days = match[1].split(",");
+  } else {
+
+    // No BYDAY supplied.
+    // Use DTSTART weekday.
+
+    var startWd = weekdayIndex(e.startDate);
+
+    var mapBack = ["SU","MO","TU","WE","TH","FR","SA"];
+
+    days = [mapBack[startWd]];
+  }
 
       for (var d = 0; d < 7; d++){
 
