@@ -295,7 +295,18 @@ for (var i = 0; i < 3; i++){
   var d = new Date();
   d.setDate(d.getDate() + i);
 
+  var prefix = "";
+
+  if(i === 0){
+    prefix = "TODAY ";
+  }else if(i === 1){
+    prefix = "TOMORROW ";
+  }else{
+    prefix = "NEXT ";
+  }
+
   var heading =
+    prefix +
     days[d.getDay()] + " " +
     d.getDate() + " " +
     months[d.getMonth()];
