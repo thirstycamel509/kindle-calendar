@@ -259,19 +259,29 @@ function loadWeather(){
   xhr.open("GET",
     "https://api.open-meteo.com/v1/forecast?latitude=" + LAT +
     "&longitude=" + LON +
-    "&current_weather=true&timezone=Europe/London",
-    true
+    "&current_weather=true" +
+    "&daily=weathercode,temperature_2m_max" +
+    "&timezone=Europe/London",
   );
 
   xhr.onreadystatechange = function(){
-    if (xhr.readyState === 4 && xhr.status === 200){
-      var data = JSON.parse(xhr.responseText);
-      var w = data.current_weather || {};
+    var data = JSON.parse(xhr.responseText);
 
-      document.getElementById("weather").innerHTML =
-      "<strong>" + getWeatherText(w.weathercode || 0) + "</strong>" +
-      " · " + (w.temperature || "--") + "°C · Feels like " +
-      (w.temperature || "--") + "°C";
+var w = data.current_weather || {};
+
+var high = "--";
+
+if(data.daily &&
+   data.daily.temperature_2m_max &&
+   data.daily.temperature_2m_max.length){
+
+  high = Math.round(data.daily.temperature_2m_max[0]);
+}
+
+document.getElementById("weather").innerHTML =
+"<strong>" + getWeatherText(w.weathercode || 0) + "</strong>" +
+"<br>" +
+Math.round(w.temperature || 0) + "°C now · High " + high + "°C";
     }
   };
 
