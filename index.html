@@ -271,7 +271,6 @@ function loadWeather(){
 
         document.getElementById("weather").innerHTML =
           "<strong>" + getWeatherText(w.weathercode || 0) + "</strong>" +
-          "<br>" +
         Math.round(w.temperature || 0) + "°C";
 
 } catch(err){
