@@ -281,8 +281,9 @@ function loadWeather(){
 
 document.getElementById("weather").innerHTML =
 "<strong>" + getWeatherText(w.weathercode || 0) + "</strong>" +
-" · " + Math.round(w.temperature || 0) + "°C now" +
-" · High " + high + "°C";
+"<br>" +
+Math.round(w.temperature || 0) + "°C now" +
+" <span style='color:#555'>· High " + high + "°C</span>";
     }
   };
 
