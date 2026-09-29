@@ -7586,9 +7586,9 @@ END:VEVENT
 BEGIN:VEVENT
 CREATED:20260621T142943Z
 DTEND;VALUE=DATE:20260819
-DTSTAMP:20260928T183848Z
+DTSTAMP:20260929T145337Z
 DTSTART;VALUE=DATE:20260815
-LAST-MODIFIED:20260928T183837Z
+LAST-MODIFIED:20260929T145335Z
 LOCATION:Croft Farm Water Park\nBredons Hardwick\, Tewkesbury\, GL20 7EE\
  , England
 SEQUENCE:1
@@ -26108,9 +26108,9 @@ END:VEVENT
 BEGIN:VEVENT
 CREATED:20260903T185941Z
 DTEND;VALUE=DATE:20261001
-DTSTAMP:20260907T165758Z
+DTSTAMP:20260929T192010Z
 DTSTART;VALUE=DATE:20260930
-LAST-MODIFIED:20260907T165758Z
+LAST-MODIFIED:20260929T192010Z
 SEQUENCE:1
 STATUS:CONFIRMED
 SUMMARY:Eff - Forest school
@@ -29266,6 +29266,28 @@ LOCATION:Heathrow
 SEQUENCE:0
 SUMMARY:Car collection
 UID:9D123995-C03B-4FBB-B920-80B11963673D
+END:VEVENT
+BEGIN:VEVENT
+CREATED:20260929T142622Z
+DESCRIPTION:Check you can donate - it could save you time on the day or e
+ ven a wasted journey.\nOur interactive questions cover the most common r
+ easons that prevent people donating when they attend their appointment.\
+ nVisit our 'check you can give' tool at https://my.blood.co.uk/check/0\n
+ Your next appointment to donate is on 04-Dec-26 15:10 at:\nBerkhamsted\,
+  Northchurch Social Centre\nBell Lane                     \nNorthchurch 
+                   \nBERKHAMSTED\nHP4 3RD .
+DTEND;TZID=Europe/London:20261204T161000
+DTSTAMP:20260929T142625Z
+DTSTART;TZID=Europe/London:20261204T151000
+LAST-MODIFIED:20260929T142622Z
+LOCATION:Berkhamsted\, Northchurch Social Centre\nBell Lane              
+        \nNorthchurch                   \nBERKHAMSTED\nHP4 3RD 
+SEQUENCE:0
+SUMMARY:Giving blood at Berkhamsted\, Northchurch Social Centre
+UID:9D1A0674-B603-435B-BBFD-7DF04CC614A1
+URL;VALUE=URI:https://my.blood.co.uk/check/0
+X-APPLE-CREATOR-IDENTITY:com.nhs.giveblood
+X-APPLE-CREATOR-TEAM-IDENTITY:7ZNB7VYECV
 END:VEVENT
 BEGIN:VEVENT
 CREATED:20180808T090947Z
